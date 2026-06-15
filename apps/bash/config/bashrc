@@ -135,4 +135,4 @@ if command -v zoxide >/dev/null 2>&1; then
 fi
 
 # Pi
-export PATH="/home/edward/.local/share/pi-node/node-v22.22.3-linux-x64/bin:$PATH"
+export PATH="$HOME/.local/share/pi-node/current/bin:$PATH"

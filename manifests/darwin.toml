@@ -36,6 +36,10 @@ rust   = false   # Rust via rustup
 [proxy]
 mihomo = true   # Mihomo (Clash.Meta) 代理
 
+# === 其他工具（按需开启）===
+[tool]
+pi = false   # pi coding agent harness（通过 pi.dev/install.sh 安装）
+
 # === 开发工具（按需开启）===
 [devtool]
 ctags        = true   # Universal Ctags 代码标签

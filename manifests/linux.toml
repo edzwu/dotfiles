@@ -42,3 +42,7 @@ pyright      = true   # Python LSP 服务器
 # === 代理工具 ===
 [proxy]
 mihomo = false   # Mihomo (Clash.Meta) 代理
+
+# === 其他工具（按需开启）===
+[tool]
+pi = false   # pi coding agent harness（通过 pi.dev/install.sh 安装）

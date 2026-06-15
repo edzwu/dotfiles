@@ -257,6 +257,7 @@ app_is_installed() {
     ctags) has_cmd ctags ;;
     clang-format) has_cmd clang-format ;;
     mihomo) has_cmd mihomo || has_cmd clash ;;
+    pi) has_cmd pi || [[ -x "$HOME/.local/bin/pi" ]] || [[ -x "$HOME/bin/pi" ]] ;;
     *) has_cmd "$app_name" ;;
   esac
 }
@@ -497,7 +498,7 @@ list_apps() {
     eval "GROUP_APPS_${safe_g}=\"\${GROUP_APPS_${safe_g}:-}\$app_name \""
   done
 
-  local group_order=("core" "editor" "search" "language" "devtool" "proxy" "other")
+  local group_order=("core" "editor" "tool" "search" "language" "devtool" "proxy" "other")
   local group
   for group in "${group_order[@]}"; do
     local safe_g

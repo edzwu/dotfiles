@@ -104,3 +104,8 @@ group = "proxy"
 desc = "GOST proxy tunnel server"
 platforms = ["darwin", "linux"]
 group = "proxy"
+
+[pi]
+desc = "pi coding agent harness"
+platforms = ["darwin", "linux"]
+group = "tool"
