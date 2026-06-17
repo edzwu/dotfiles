@@ -38,7 +38,7 @@ app_configure() {
     return 0
   fi
 
-  # Create a symlink in ~/.local/bin so it takes precedence over /usr/bin/ctags
+  # Create a symlink in ~/.local/bin so it takes precedence over /usr/bin/ctags.
   ensure_dir "$HOME/.local/bin"
   link_file "$brew_ctags" "$HOME/.local/bin/ctags"
 }
