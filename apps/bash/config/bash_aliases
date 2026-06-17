@@ -84,6 +84,17 @@ alias t="tmux a"
 # tui for task gtd
 alias tt="taskwarrior-tui"
 
+# tmux 快捷方式：tmux enter <session-name> 等价于 tmux new -A -s <session-name>
+# 例如：tmux enter blog  =>  tmux new -A -s blog
+tmux() {
+  if [[ $# -ge 2 && "$1" == "enter" ]]; then
+    shift
+    command tmux new -A -s "$1"
+    return
+  fi
+  command tmux "$@"
+}
+
 # 查看当前 IP 和地理位置
 alias whereme='curl -s http://ip-api.com/json && echo'
 
