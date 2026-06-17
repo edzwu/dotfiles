@@ -35,7 +35,7 @@ autoload -Uz compinit
 compinit
 
 # 提示符
-PROMPT='%n@%m:%~$ '
+PROMPT='%n@%m:%1~$ '
 
 # ==========================================
 # 自定义 rsync 快捷方式
