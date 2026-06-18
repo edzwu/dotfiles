@@ -126,9 +126,16 @@ Plug 'skywind3000/gutentags_plus'
 " Git
 Plug 'tpope/vim-fugitive'
 
+" Python syntax-aware folding (function/class/docstring/import)
+Plug 'tmhedberg/SimpylFold'
+
 " LSP (Python: pyright, Go: gopls via vim-go already)
 Plug 'prabirshrestha/vim-lsp'
 Plug 'mattn/vim-lsp-settings'
+
+" Python folding configuration
+let g:SimpylFold_fold_docstring = 1
+let g:SimpylFold_fold_import = 1
 
 " markdown table
 Plug 'dhruvasagar/vim-table-mode'
