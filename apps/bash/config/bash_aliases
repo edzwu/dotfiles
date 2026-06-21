@@ -106,3 +106,5 @@ alias ssh-auth='ssh-copy-id'
 
 # 机型/环境相关 alias 建议放到 ~/.bash_aliases.local
 [ -f "$HOME/.bash_aliases.local" ] && . "$HOME/.bash_aliases.local"
+
+alias va='source .venv/bin/activate'
