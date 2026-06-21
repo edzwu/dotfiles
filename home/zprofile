@@ -7,6 +7,14 @@
 # 加载 profile.d 中的环境变量片段
 if [ -d "$HOME/.profile.d" ]; then
   for f in "$HOME/.profile.d/"*.sh; do
+    case "$(basename "$f")" in
+      *.local.sh) continue ;;  # 本地敏感配置单独加载
+    esac
+    [ -r "$f" ] && . "$f"
+  done
+
+  # 加载本地私有配置（API Key 等敏感信息，不进入 git）
+  for f in "$HOME/.profile.d/"*.local.sh; do
     [ -r "$f" ] && . "$f"
   done
   unset f

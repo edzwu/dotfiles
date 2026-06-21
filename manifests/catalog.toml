@@ -109,3 +109,8 @@ group = "proxy"
 desc = "pi coding agent harness"
 platforms = ["darwin", "linux"]
 group = "tool"
+
+[firecrawl]
+desc = "Firecrawl API configuration"
+platforms = ["darwin", "linux"]
+group = "tool"

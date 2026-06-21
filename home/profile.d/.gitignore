@@ -1,0 +1,2 @@
+# 本地私有配置（API Key、token 等敏感信息），不进入 git
+*.local.sh

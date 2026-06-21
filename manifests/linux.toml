@@ -45,4 +45,5 @@ mihomo = false   # Mihomo (Clash.Meta) 代理
 
 # === 其他工具（按需开启）===
 [tool]
-pi = false   # pi coding agent harness（通过 pi.dev/install.sh 安装）
+pi        = false   # pi coding agent harness（通过 pi.dev/install.sh 安装）
+firecrawl = false   # Firecrawl API 本地配置（首次运行后请编辑 ~/.profile.d/firecrawl.local.sh）

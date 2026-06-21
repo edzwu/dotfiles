@@ -1,0 +1,5 @@
+# Firecrawl local configuration
+# 本文件为模板，复制为 ~/.profile.d/firecrawl.local.sh 后填入真实 API Key。
+# *.local.sh 不被 git 追踪，避免提交敏感信息。
+
+export FIRECRAWL_API_KEY="your-firecrawl-api-key"
