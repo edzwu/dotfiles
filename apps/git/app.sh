@@ -95,9 +95,4 @@ app_post_install() {
     git config --file "$gitconfig_local" --unset core.pager 2>/dev/null || true
     log_info "  Using default git pager (delta not available)"
   fi
-
-  # macOS 特定：使用 Keychain 作为凭证助手
-  if [[ "$DETECTED_OS" == "darwin" ]]; then
-    git config --file "$gitconfig_local" credential.helper osxkeychain
-  fi
 }
