@@ -170,6 +170,8 @@ Plug 'MattesGroeger/vim-bookmarks'
 
 " Startify dashboard with GitHub heatmap
 Plug 'mhinz/vim-startify'
+
+Plug 'vim-scripts/XML-Folding'
 call plug#end()
 
 
