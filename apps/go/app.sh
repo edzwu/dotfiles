@@ -13,8 +13,8 @@ APP_DEPS=()
 # APP_BREW_FORMULA="go"
 # APP_APT_PACKAGE="golang-go"
 
-GO_VERSION="${GO_VERSION:-1.23.6}"
-MIN_GO_VERSION="${MIN_GO_VERSION:-1.23.0}"
+GO_VERSION="${GO_VERSION:-1.26.5}"
+MIN_GO_VERSION="${MIN_GO_VERSION:-1.25.0}"
 
 _go_bin() {
   command -v go 2>/dev/null || true
