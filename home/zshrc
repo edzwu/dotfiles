@@ -84,12 +84,14 @@ fi
 test -e "${HOME}/.iterm2_shell_integration.zsh" && source "${HOME}/.iterm2_shell_integration.zsh"
 
 
-# >>> grok installer >>>
-export PATH="$HOME/.grok/bin:$PATH"
-# <<< grok installer <<<
-
 # 加载 dircolors 颜色配置
 if command -v gdircolors &> /dev/null; then
     eval "$(gdircolors -b)"
 fi
+
+# >>> grok installer >>>
+export PATH="$HOME/.grok/bin:$PATH"
+fpath=(~/.grok/completions/zsh $fpath)
+autoload -Uz compinit && compinit -C
+# <<< grok installer <<<
 
