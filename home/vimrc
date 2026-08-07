@@ -2,6 +2,17 @@
 " 基础设置
 " ------------------------------
 
+" GUI apps such as Leaf may not inherit Homebrew's shell PATH.
+if has('macunix')
+  " Paths are prepended in order, so Apple Silicon takes precedence.
+  for s:brew_path in ['/usr/local/bin', '/opt/homebrew/bin']
+    if isdirectory(s:brew_path) && index(split($PATH, ':'), s:brew_path) < 0
+      let $PATH = s:brew_path . ':' . $PATH
+    endif
+  endfor
+  unlet! s:brew_path
+endif
+
 " Ensure Go binary paths are available in vim (for vim-go)
 for s:go_path in ['~/.local/go/bin', '~/go/bin']
   let s:expanded = expand(s:go_path)
@@ -56,8 +67,9 @@ set foldenable
 " let g:gutentags_trace = 1
 let g:gutentags_define_advanced_commands = 1
 
-" Ensure gtags uses universal-ctags regardless of shell environment
-let $GTAGSLABEL = 'universal-ctags'
+" Use gtags' builtin parser for full call-site references in GRTAGS;
+" its universal-ctags plugin does not provide complete cscope \cs results
+let $GTAGSLABEL = 'default'
 let $GTAGSCONF = expand('~/.global/gtags.conf')
 
 " ctags fallback: include signature info for nicer display
@@ -306,6 +318,20 @@ function! s:LspToggle() abort
 endfunction
 
 nnoremap <silent> <leader>lt :LspToggle<CR>
+
+" LSP 代码导航快捷键（\l 前缀）
+nnoremap <silent> <leader>lr :LspReferences<CR>
+nnoremap <silent> <leader>ld :LspDefinition<CR>
+nnoremap <silent> <leader>li :LspImplementation<CR>
+nnoremap <silent> <leader>ly :LspTypeDefinition<CR>
+nnoremap <silent> <leader>lh :LspHover<CR>
+nnoremap <silent> <leader>ln :LspRename<CR>
+nnoremap <silent> <leader>la :LspCodeAction<CR>
+nnoremap <silent> <leader>lc :LspCallHierarchyIncoming<CR>
+nnoremap <silent> <leader>lC :LspCallHierarchyOutgoing<CR>
+nnoremap <silent> <leader>ls :LspDocumentSymbol<CR>
+nnoremap <silent> [g :LspPreviousDiagnostic<CR>
+nnoremap <silent> ]g :LspNextDiagnostic<CR>
 
 " LSP debug (uncomment when troubleshooting)
 " let g:lsp_log_file = expand('~/.cache/vim-lsp.log')

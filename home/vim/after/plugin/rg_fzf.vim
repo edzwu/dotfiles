@@ -14,7 +14,8 @@ if empty(globpath(&rtp, 'autoload/fzf/vim.vim'))
   endif
   finish
 endif
-if !executable('rg')
+" Leaf may need the absolute-path fallback even after vimrc updates $PATH.
+if !executable('rg') && !executable('/opt/homebrew/bin/rg')
   echohl WarningMsg | echom '[zw-rg] ripgrep (rg) not found in PATH.' | echohl None
 endif
 
