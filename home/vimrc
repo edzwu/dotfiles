@@ -124,6 +124,9 @@ call plug#begin('~/.vim/plugged')
 
 Plug 'fatih/vim-go', { 'do': ':GoUpdateBinaries' }
 
+" 异步格式化/lint（Go 保存时用 golines 折长行）
+Plug 'dense-analysis/ale'
+
 " terminal in vim
 Plug 'voldikss/vim-floaterm'
 
@@ -240,6 +243,25 @@ inoremap <F5> <C-r>=strftime('%Y-%m-%d %H:%M:%S')<CR>
 
 " 最近打开过的文件（跨 session，来自 v:oldfiles）
 nnoremap <leader>o :History<CR>
+" ------------------------------
+" ALE：保存时自动格式化
+" ------------------------------
+" golines 内部会先跑 goimports 再折长行，一个 fixer 就够
+let g:ale_fixers = {
+\   'go': ['golines'],
+\}
+let g:ale_fix_on_save = 1
+let g:ale_go_golines_options = '-m 100'
+" 只做 fix，不用 ALE 的 linter（诊断交给 vim-lsp/gopls）
+let g:ale_linters_explicit = 1
+let g:ale_linters = {}
+" 关闭 ALE 自己的 LSP 客户端，避免和 vim-lsp 重复
+let g:ale_disable_lsp = 1
+
+" 格式化交给 ALE/golines，关掉 vim-go 保存时的 gofmt，避免双重格式化
+let g:go_fmt_autosave = 0
+let g:go_imports_autosave = 0
+
 " ------------------------------
 " 代码 静态检查工具
 " ------------------------------
