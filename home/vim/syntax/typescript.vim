@@ -32,6 +32,10 @@ syntax region typescriptLightTemplate start=+`+ skip=+\\\\\|\\`+ end=+`+ oneline
 syntax match typescriptLightNumber "\v<\d+(\.\d+)?([eE][+-]?\d+)?>"
 syntax match typescriptLightOperator "=>\|[?:=+\-*/%<>!&|]\+"
 
+" Cheap brace-block folding so foldmethod=syntax works (zM/zR). Transparent
+" keeps inner highlighting intact; self-nesting handles nested functions.
+syntax region typescriptLightBlock start="{" end="}" transparent fold contains=typescriptLightBlock
+
 highlight default link typescriptLightKeyword Keyword
 highlight default link typescriptLightType Type
 highlight default link typescriptLightTodo Todo
