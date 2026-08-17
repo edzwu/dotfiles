@@ -1,0 +1,3 @@
+# rsync exclude patterns used for remote-to-local downloads.
+# A basename pattern ending in / matches directories only at every depth.
+.*/

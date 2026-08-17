@@ -38,26 +38,11 @@ compinit
 PROMPT='%n@%m:%1~$ '
 
 # ==========================================
-# 自定义 rsync 快捷方式
+# 安全 rsync 快捷方式
 # ==========================================
-rs() {
-    if [ $# -lt 2 ]; then
-        echo "🚀 Usage: rs <source> <target>"
-        echo "   (支持自动识别远程路径，格式为 host:path)"
-        echo ""
-        echo "   Examples:"
-        echo "   rs m:repo/calx .           # 下载 (远程 -> 本地)"
-        echo "   rs ./localfile m:repo/     # 上传 (本地 -> 远程)"
-        echo "   rs m:file1 m:file2         # 远程拷贝 (需配置免密)"
-        return 1
-    fi
-
-    local src="$1"
-    local dst="$2"
-
-    rsync -avzP "$src" "$dst"
-}
-
+# 实现在 ~/.local/bin/rs：下载默认排除隐藏目录，超过配置阈值时确认。
+# 清除 source 旧版 zshrc 后可能残留在当前 shell 里的同名函数。
+unfunction rs 2>/dev/null || true
 compdef _rsync rs
 
 # 远程补全（ssh/scp）

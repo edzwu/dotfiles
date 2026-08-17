@@ -1,0 +1,206 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Safe rsync shortcut. Downloads are scanned before transfer, hidden
+# directories are excluded by default, and large transfers require consent.
+
+usage() {
+  cat <<'EOF'
+Usage: rs [options] <source> <target>
+
+Safe download policy (remote -> local):
+  - exclude hidden directories by default
+  - estimate included source size with an rsync dry-run
+  - ask before downloading more than the configured limit (default: 500 MiB)
+
+Options:
+  -y, --yes             allow a large download without prompting
+      --include-hidden  include hidden directories for this transfer
+      --max-bytes N     override the confirmation threshold in bytes
+  -h, --help            show this help
+
+Configuration:
+  ~/.config/rs/config    shell variable assignments
+  ~/.config/rs/excludes  native rsync exclude patterns
+
+  RS_CONFIRM_BYTES=524288000
+  RS_EXCLUDE_HIDDEN_DIRS=1
+  RS_EXCLUDE_FILE="$HOME/.config/rs/excludes"
+
+Examples:
+  rs wsl:repo/project /tmp/
+  rs --include-hidden wsl:repo/project /tmp/
+  rs --yes wsl:large-dataset ./data/
+  rs ./local-file wsl:repo/
+EOF
+}
+
+human_bytes() {
+  awk -v bytes="$1" 'BEGIN {
+    split("B KiB MiB GiB TiB", units, " ")
+    value = bytes + 0
+    unit = 1
+    while (value >= 1024 && unit < 5) {
+      value /= 1024
+      unit++
+    }
+    if (unit == 1) printf "%.0f %s", value, units[unit]
+    else printf "%.1f %s", value, units[unit]
+  }'
+}
+
+is_remote_spec() {
+  [[ "$1" == *:* ]]
+}
+
+estimate_download_bytes() {
+  local src="$1"
+  local dst="$2"
+  shift 2
+  local -a filters=("$@")
+  local output size
+
+  if [[ ${#filters[@]} -gt 0 ]]; then
+    if ! output="$(LC_ALL=C rsync -azn --stats "${filters[@]}" "$src" "$dst" 2>&1)"; then
+      printf '%s\n' "$output" >&2
+      return 1
+    fi
+  else
+    if ! output="$(LC_ALL=C rsync -azn --stats "$src" "$dst" 2>&1)"; then
+      printf '%s\n' "$output" >&2
+      return 1
+    fi
+  fi
+
+  size="$(printf '%s\n' "$output" | awk '
+    /^Total file size:/ {
+      value=$4
+      gsub(/,/, "", value)
+      print value
+      exit
+    }
+    /^total size is / {
+      value=$4
+      gsub(/,/, "", value)
+      print value
+      exit
+    }
+  ')"
+  if [[ ! "$size" =~ ^[0-9]+$ ]]; then
+    printf 'rs: could not determine download size from rsync dry-run\n' >&2
+    return 1
+  fi
+  printf '%s' "$size"
+}
+
+config_file="${RS_CONFIG:-${XDG_CONFIG_HOME:-$HOME/.config}/rs/config}"
+RS_CONFIRM_BYTES=524288000
+RS_EXCLUDE_HIDDEN_DIRS=1
+RS_EXCLUDE_FILE="${XDG_CONFIG_HOME:-$HOME/.config}/rs/excludes"
+if [[ -r "$config_file" ]]; then
+  # This is a user-owned shell configuration file, like .zshrc.
+  # shellcheck source=/dev/null
+  source "$config_file"
+fi
+
+yes=0
+include_hidden=0
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    -y|--yes)
+      yes=1
+      shift
+      ;;
+    --include-hidden)
+      include_hidden=1
+      shift
+      ;;
+    --max-bytes)
+      if [[ $# -lt 2 ]]; then
+        printf 'rs: --max-bytes requires an integer\n' >&2
+        exit 2
+      fi
+      RS_CONFIRM_BYTES="$2"
+      shift 2
+      ;;
+    -h|--help)
+      usage
+      exit 0
+      ;;
+    --)
+      shift
+      break
+      ;;
+    -*)
+      printf 'rs: unknown option: %s\n' "$1" >&2
+      usage >&2
+      exit 2
+      ;;
+    *)
+      break
+      ;;
+  esac
+done
+
+if [[ $# -ne 2 ]]; then
+  usage >&2
+  exit 2
+fi
+if [[ ! "$RS_CONFIRM_BYTES" =~ ^[0-9]+$ ]]; then
+  printf 'rs: RS_CONFIRM_BYTES must be a non-negative integer, got %q\n' "$RS_CONFIRM_BYTES" >&2
+  exit 2
+fi
+
+src="$1"
+dst="$2"
+local_download=0
+if is_remote_spec "$src" && ! is_remote_spec "$dst"; then
+  local_download=1
+fi
+
+rsync_args=(-avzP)
+filter_args=()
+if [[ "$local_download" -eq 1 && "$include_hidden" -eq 0 && "$RS_EXCLUDE_HIDDEN_DIRS" != "0" ]]; then
+  if [[ -r "$RS_EXCLUDE_FILE" ]]; then
+    filter_args+=("--exclude-from=$RS_EXCLUDE_FILE")
+  else
+    # Safe fallback when the optional config file has not been installed.
+    filter_args+=("--exclude=.*/")
+  fi
+fi
+
+if [[ "$local_download" -eq 1 ]]; then
+  printf 'rs: scanning planned download...\n' >&2
+  if [[ ${#filter_args[@]} -gt 0 ]]; then
+    estimated_bytes="$(estimate_download_bytes "$src" "$dst" "${filter_args[@]}")"
+  else
+    estimated_bytes="$(estimate_download_bytes "$src" "$dst")"
+  fi
+  printf 'rs: planned download size: %s' "$(human_bytes "$estimated_bytes")" >&2
+  if [[ ${#filter_args[@]} -gt 0 ]]; then
+    printf ' (hidden directories excluded)' >&2
+  fi
+  printf '\n' >&2
+
+  if (( estimated_bytes > RS_CONFIRM_BYTES )) && [[ "$yes" -eq 0 ]]; then
+    if [[ ! -t 0 ]]; then
+      printf 'rs: download exceeds %s; interactive approval required (or pass --yes)\n' \
+        "$(human_bytes "$RS_CONFIRM_BYTES")" >&2
+      exit 3
+    fi
+    printf 'Download %s from %s? [y/N] ' "$(human_bytes "$estimated_bytes")" "$src" >&2
+    read -r reply
+    case "$reply" in
+      y|Y|yes|YES|Yes) ;;
+      *)
+        printf 'rs: cancelled\n' >&2
+        exit 3
+        ;;
+    esac
+  fi
+fi
+
+if [[ ${#filter_args[@]} -gt 0 ]]; then
+  exec rsync "${rsync_args[@]}" "${filter_args[@]}" "$src" "$dst"
+fi
+exec rsync "${rsync_args[@]}" "$src" "$dst"

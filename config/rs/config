@@ -1,0 +1,11 @@
+# rs safe-download policy. This file is sourced by ~/.local/bin/rs.
+
+# Ask before a remote-to-local download whose included source tree is larger
+# than 500 MiB. Use `rs --yes ...` for explicit non-interactive approval.
+RS_CONFIRM_BYTES=524288000
+
+# Apply rsync patterns from this file to downloads. The default pattern ignores
+# hidden directories at every depth but keeps hidden files. Add more native
+# rsync exclude patterns to this file as needed.
+RS_EXCLUDE_HIDDEN_DIRS=1
+RS_EXCLUDE_FILE="${XDG_CONFIG_HOME:-$HOME/.config}/rs/excludes"

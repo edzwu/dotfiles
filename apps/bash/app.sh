@@ -33,6 +33,9 @@ app_configure() {
     link_home_file "$DOTFILES/home/zprofile" ".zprofile"
   fi
 
+  # rs 的安全下载策略（隐藏目录过滤 + 大文件确认）。
+  link_config_dir "$DOTFILES/config/rs" "rs"
+
   # 链接 scripts/ 目录下的可执行脚本到 PATH
   # 注意：tmux_layout 由 apps/tmux/app.sh 在安装 tmux 时单独处理
   ensure_dir "$HOME/.local/bin"
