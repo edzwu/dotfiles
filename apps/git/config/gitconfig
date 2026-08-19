@@ -64,6 +64,7 @@
   ci = commit
   cm = commit -m
   cp = cherry-pick
+  fap = fetch --all --prune
 
   # Log with graph
   lg = log --color --graph --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset' --abbrev-commit
