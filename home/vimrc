@@ -154,6 +154,9 @@ Plug 'mattn/vim-lsp-settings'
 let g:SimpylFold_fold_docstring = 1
 let g:SimpylFold_fold_import = 1
 
+" 折叠视图增强（foldtext 显示首行+行数/注释等）
+Plug 'ubaldot/vim-extended-view'
+
 " markdown table
 Plug 'dhruvasagar/vim-table-mode'
 Plug 'godlygeek/tabular'
