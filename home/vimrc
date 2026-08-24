@@ -279,12 +279,15 @@ nnoremap <leader>G :Rg!<Space>
 
 " ------------------------------
 " 方案 C: gtags 结果 → fzf 弹窗(bat 预览)→ 多选进 quickfix
-" \fd 定义 / \fr 引用 / \fc 调用者(谁调用了它)
+" \fd 定义 / \fr 引用 / \fc 调用者 / \ft 文本搜索 / \fe egrep 正则
 " 单选 Enter 直接跳; Tab 多选后 Enter 进 quickfix 工作台(p/]q/\qh 接管)
 " 注意: 精确引用(类型感知)仍用 \lr(LSP); \fr 是 gtags 名字匹配版
+" \ft/\fe 默认取光标词,回车前可编辑输入任意文本/正则
 nnoremap <silent> <leader>fd :call gtags_fzf#run('g', 'def')<CR>
 nnoremap <silent> <leader>fr :call gtags_fzf#run('r', 'ref')<CR>
 nnoremap <silent> <leader>fc :call gtags_fzf#run('c', 'call')<CR>
+nnoremap <silent> <leader>ft :call gtags_fzf#run('t', 'text')<CR>
+nnoremap <silent> <leader>fe :call gtags_fzf#run('e', 'egrep')<CR>
 " ------------------------------
 " ALE：保存时自动格式化
 " ------------------------------

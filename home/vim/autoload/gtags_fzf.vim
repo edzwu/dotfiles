@@ -9,12 +9,21 @@
 " 数据源是 gtags(名字匹配);类型精确的引用请用 vim-lsp 的 \lr
 
 " 查询并解析 gtags 输出,返回 [[绝对路径, 行号, 文本], ...]
-" flag: g=定义  r=引用  c=调用者(谁调用了它)
+" flag: g=定义  r=引用  c=调用者(谁调用了它)  t=文本搜索  e=egrep 正则
 function! gtags_fzf#items(word, flag) abort
   let l:root = exists('b:gutentags_root') ? b:gutentags_root : getcwd()
-  let l:cmd = a:flag ==# 'c'
-        \ ? printf('cd %s && gtags-cscope -L3 %s', shellescape(l:root), shellescape(a:word))
-        \ : printf('cd %s && global -x%s %s', shellescape(l:root), a:flag ==# 'r' ? 'r' : '', shellescape(a:word))
+  if a:flag ==# 'c'
+    " cscope query 3: 谁调用了这个函数
+    let l:cmd = printf('cd %s && gtags-cscope -L3 %s', shellescape(l:root), shellescape(a:word))
+  elseif a:flag ==# 't'
+    " cscope query 4: 文本搜索(含注释),比符号搜索更宽
+    let l:cmd = printf('cd %s && gtags-cscope -L4 %s', shellescape(l:root), shellescape(a:word))
+  elseif a:flag ==# 'e'
+    " cscope query 6: egrep 正则搜索
+    let l:cmd = printf('cd %s && gtags-cscope -L6 %s', shellescape(l:root), shellescape(a:word))
+  else
+    let l:cmd = printf('cd %s && global -x%s %s', shellescape(l:root), a:flag ==# 'r' ? 'r' : '', shellescape(a:word))
+  endif
   let l:items = []
   for l:line in systemlist(l:cmd)
     let l:fields = split(l:line)
@@ -42,6 +51,14 @@ function! gtags_fzf#run(flag, label) abort
   if l:word ==# ''
     echom '[gtags-fzf] no word under cursor'
     return
+  endif
+  " t/e: 允许输入任意文本或正则,默认取光标词
+  if a:flag ==# 't' || a:flag ==# 'e'
+    let l:input = input(printf('%s> ', a:label), l:word)
+    if empty(l:input)
+      return
+    endif
+    let l:word = l:input
   endif
   let l:items = gtags_fzf#items(l:word, a:flag)
   if empty(l:items)
