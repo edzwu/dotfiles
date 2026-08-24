@@ -63,6 +63,11 @@ set foldmethod=syntax
 set foldlevel=99
 set foldenable
 
+" yats 语法重 + foldmethod=syntax 会在打开 TS/JS 文件时卡死
+" （逐行语法级折叠计算，实测 main.ts 需 18s+）。TS/JS 改用 indent 折叠，
+" 轻量且体验等价（实测 1.7s、折叠正常）。
+autocmd FileType typescript,typescriptreact,javascript,javascriptreact setlocal foldmethod=indent
+
 " gtags 的问题定位
 " let g:gutentags_trace = 1
 let g:gutentags_define_advanced_commands = 1
