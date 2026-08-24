@@ -126,6 +126,15 @@ let g:bookmark_highlight_lines = 1
 " ------------------------------
 let g:vim_markdown_new_list_item_indent = 2
 
+" typescript-language-server also supports JavaScript inferred projects.
+" vim-lsp-settings blocks JS/TS when no parent node_modules exists by default;
+" allow the installed server for standalone JS and dependency-free extensions.
+let g:lsp_settings = {
+  \ 'typescript-language-server': {
+  \   'blocklist': [],
+  \ },
+  \ }
+
 " ------------------------------
 " 插件系统：vim-plug
 " ------------------------------
@@ -272,8 +281,8 @@ nnoremap ]Q :clast<CR>
 nnoremap [Q :cfirst<CR>
 nnoremap <leader>q :copen<CR>
 nnoremap <leader>Q :cclose<CR>
-" 有结果才自动弹 quickfix（\cc/\cd 等 cscope 查询后）
-autocmd QuickFixCmdPost * cwindow
+" gutentags_plus 和 vim-lsp 会在有结果时自行打开 quickfix。
+" 不要在 QuickFixCmdPost 中 cwindow：会在插件填充列表途中切窗，触发 winfixbuf 冲突。
 " quickfix 历史回溯（vim 8+ 原生 colder/cnewer，无需插件）：
 " \cc 连续查多个符号后，\qh 翻回上一次的结果
 nnoremap <leader>qh :colder<CR>
@@ -399,19 +408,36 @@ nnoremap <silent> ]g :LspNextDiagnostic<CR>
 "   原插件默认 \cd 是 callees（我调了谁），现改为 definition 别名（同 \cg）
 "   callees 移到 \cC，与 LSP 的 \lC（outgoing）对齐
 "   gtags_plus_nomap=1 已禁用插件默认键位，这里是完整定义
+" 老版 gutentags_plus 不认识 Vim 9.1 的 winfixbuf；查询期间临时取消，随后恢复。
 " ------------------------------
-nmap <silent> <leader>cs <Plug>GscopeFindSymbol
-nmap <silent> <leader>cg <Plug>GscopeFindDefinition
-nmap <silent> <leader>cc <Plug>GscopeFindCallingFunc
-nmap <silent> <leader>cd <Plug>GscopeFindDefinition
-nmap <silent> <leader>cC <Plug>GscopeFindCalledFunc
-nmap <silent> <leader>ct <Plug>GscopeFindText
-nmap <silent> <leader>ce <Plug>GscopeFindEgrep
-nmap <silent> <leader>cf <Plug>GscopeFindFile
-nmap <silent> <leader>ci <Plug>GscopeFindInclude
-nmap <silent> <leader>ca <Plug>GscopeFindAssign
-nmap <silent> <leader>cz <Plug>GscopeFindCtag
-nmap <silent> <leader>ck :GscopeKill<cr>
+function! s:GscopeFind(what, is_file) abort
+  let l:source_win = win_getid()
+  let l:restore_winfixbuf = &l:winfixbuf
+  if l:restore_winfixbuf
+    setlocal nowinfixbuf
+  endif
+  try
+    let l:keyword = a:is_file ? expand('<cfile>') : expand('<cword>')
+    execute 'GscopeFind ' . a:what . ' ' . fnameescape(l:keyword)
+  finally
+    if l:restore_winfixbuf && win_id2win(l:source_win) > 0
+      call win_execute(l:source_win, 'setlocal winfixbuf')
+    endif
+  endtry
+endfunction
+
+nnoremap <silent> <leader>cs :call <SID>GscopeFind('s', 0)<CR>
+nnoremap <silent> <leader>cg :call <SID>GscopeFind('g', 0)<CR>
+nnoremap <silent> <leader>cc :call <SID>GscopeFind('c', 0)<CR>
+nnoremap <silent> <leader>cd :call <SID>GscopeFind('g', 0)<CR>
+nnoremap <silent> <leader>cC :call <SID>GscopeFind('d', 0)<CR>
+nnoremap <silent> <leader>ct :call <SID>GscopeFind('t', 0)<CR>
+nnoremap <silent> <leader>ce :call <SID>GscopeFind('e', 0)<CR>
+nnoremap <silent> <leader>cf :call <SID>GscopeFind('f', 1)<CR>
+nnoremap <silent> <leader>ci :call <SID>GscopeFind('i', 1)<CR>
+nnoremap <silent> <leader>ca :call <SID>GscopeFind('a', 0)<CR>
+nnoremap <silent> <leader>cz :call <SID>GscopeFind('z', 0)<CR>
+nnoremap <silent> <leader>ck :GscopeKill<CR>
 
 " LSP debug (uncomment when troubleshooting)
 " let g:lsp_log_file = expand('~/.cache/vim-lsp.log')
