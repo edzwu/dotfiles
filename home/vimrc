@@ -87,6 +87,10 @@ let g:gutentags_cache_dir = expand('~/.cache/tags')
 " enable gtags module
 let g:gutentags_modules = ['ctags', 'gtags_cscope']
 
+" 禁用 gutentags_plus 默认键位，由 vimrc 统一定义 \c* 系列
+" (避免插件加载顺序导致键位被覆盖，且便于统一语义管理)
+let g:gutentags_plus_nomap = 1
+
 " macOS: use Homebrew's universal-ctags instead of BSD ctags (/usr/bin/ctags)
 if has('macunix')
   if executable('/opt/homebrew/bin/ctags')
@@ -392,6 +396,26 @@ nnoremap <silent> <leader>lC :LspCallHierarchyOutgoing<CR>
 nnoremap <silent> <leader>ls :LspDocumentSymbol<CR>
 nnoremap <silent> [g :LspPreviousDiagnostic<CR>
 nnoremap <silent> ]g :LspNextDiagnostic<CR>
+
+" ------------------------------
+" \c* 系列统一语义（与 \l* 对齐）
+" 约定：d = definition，c = 调用者，C = 被调用者（大小写成对）
+"   原插件默认 \cd 是 callees（我调了谁），现改为 definition 别名（同 \cg）
+"   callees 移到 \cC，与 LSP 的 \lC（outgoing）对齐
+"   gtags_plus_nomap=1 已禁用插件默认键位，这里是完整定义
+" ------------------------------
+nmap <silent> <leader>cs <Plug>GscopeFindSymbol
+nmap <silent> <leader>cg <Plug>GscopeFindDefinition
+nmap <silent> <leader>cc <Plug>GscopeFindCallingFunc
+nmap <silent> <leader>cd <Plug>GscopeFindDefinition
+nmap <silent> <leader>cC <Plug>GscopeFindCalledFunc
+nmap <silent> <leader>ct <Plug>GscopeFindText
+nmap <silent> <leader>ce <Plug>GscopeFindEgrep
+nmap <silent> <leader>cf <Plug>GscopeFindFile
+nmap <silent> <leader>ci <Plug>GscopeFindInclude
+nmap <silent> <leader>ca <Plug>GscopeFindAssign
+nmap <silent> <leader>cz <Plug>GscopeFindCtag
+nmap <silent> <leader>ck :GscopeKill<cr>
 
 " LSP debug (uncomment when troubleshooting)
 " let g:lsp_log_file = expand('~/.cache/vim-lsp.log')

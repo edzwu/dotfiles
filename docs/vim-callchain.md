@@ -75,7 +75,7 @@ nnoremap <leader>G :Rg!<Space>   " 结果直接进 quickfix,配合 p 预览 + ]q
 
 | 键位 | 功能 | 归属 |
 |---|---|---|
-| `\cc` / `\cd` | cscope 谁调用了它 / 它调用了谁 | gutentags_plus |
+| `\cc` / `\cC` | cscope 谁调用了它 / 它调用了谁(统一语义,对齐 `\lC`) | gutentags_plus |
 | `\cg` / `\cs` | 定义 / 符号引用 | gutentags_plus |
 | `\lr` | LSP 精确引用(TS 调用链主力) | vim-lsp |
 | `]q` `[q` `]Q` `[Q` | quickfix 上下/首尾 | 第 0 层 |

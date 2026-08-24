@@ -28,7 +28,8 @@
 | `\cs` | **Symbol / References** — 找所有使用处 |
 | `\cg` | Definition — 跳定义 |
 | `\cc` | Callers — 谁调了我 |
-| `\cd` | Called functions — 我调了谁 |
+| `\cC` | Called functions — 我调了谁（原 `\cd`，与 `\lC` 对齐） |
+| `\cd` | Definition 别名（同 `\cg`，统一 d=definition 语义） |
 | `\ct` | Text search — 文本搜索 |
 | `\ce` | Egrep — 正则搜索 |
 | `\cf` | File — 文件搜索 |
