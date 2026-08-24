@@ -28,13 +28,16 @@ syntax region typescriptLightBlockComment start="/\*" end="\*/" contains=typescr
 
 syntax region typescriptLightString start=+"+ skip=+\\\\\|\\"+ end=+"+ oneline
 syntax region typescriptLightString start=+'+ skip=+\\\\\|\\'+ end=+'+ oneline
-syntax region typescriptLightTemplate start=+`+ skip=+\\\\\|\\`+ end=+`+ oneline
+" 模板字符串支持多行(TS 中常见);未闭合时延伸到文件尾属正常语法行为
+syntax region typescriptLightTemplate start=+`+ skip=+\\\\\|\\`+ end=+`+
 syntax match typescriptLightNumber "\v<\d+(\.\d+)?([eE][+-]?\d+)?>"
 syntax match typescriptLightOperator "=>\|[?:=+\-*/%<>!&|]\+"
 
-" Cheap brace-block folding so foldmethod=syntax works (zM/zR). Transparent
-" keeps inner highlighting intact; self-nesting handles nested functions.
-syntax region typescriptLightBlock start="{" end="}" transparent fold contains=typescriptLightBlock
+" Cheap brace-block folding so foldmethod=syntax works (zM/zR).
+" 注意: transparent 区域的 contains 必须显式列出所有高亮组 + 自身(嵌套),
+" 否则 {} 内部的所有高亮都会被吞掉(之前的 bug: 只 contains 自身)
+syntax cluster typescriptLightTop contains=typescriptLightKeyword,typescriptLightType,typescriptLightTodo,typescriptLightLineComment,typescriptLightBlockComment,typescriptLightString,typescriptLightTemplate,typescriptLightNumber,typescriptLightOperator
+syntax region typescriptLightBlock start="{" end="}" transparent fold contains=@typescriptLightTop,typescriptLightBlock
 
 highlight default link typescriptLightKeyword Keyword
 highlight default link typescriptLightType Type
