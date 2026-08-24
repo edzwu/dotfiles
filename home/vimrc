@@ -119,16 +119,14 @@ let g:bookmark_highlight_lines = 1
 " ------------------------------
 " 插件预配置（必须在 plug#begin 之前）
 " ------------------------------
-let g:polyglot_disabled = ['autoindent', 'graphql']
 let g:vim_markdown_new_list_item_indent = 2
 
 " ------------------------------
 " 插件系统：vim-plug
 " ------------------------------
-" TypeScript 高亮用 vim-polyglot 内置的 yats（完整语法：类型/泛型/JSX）。
-" 曾在部分 TS 文件翻页时触发 'redrawtime exceeded'，故一度用自写轻量语法
-" 替代；自写语法维护成本高且出过块内高亮丢失的 bug，现恢复 yats。
-" 若再遇到 redrawtime 报错，调大 redrawtime 而非换语法。
+" TypeScript 高亮用 Vim 9.1 内置 yats（与 polyglot 打包版同源）。
+" 曾在部分 TS 文件翻页时触发 'redrawtime exceeded'，一度用自写轻量语法
+" 替代，后恢复内置；若再遇到 redrawtime 报错，调大 redrawtime 而非换语法。
 set redrawtime=5000
 
 call plug#begin('~/.vim/plugged')
@@ -181,7 +179,6 @@ Plug 'preservim/tagbar'
 Plug 'preservim/vim-markdown'
 
 " 语法增强
-Plug 'sheerun/vim-polyglot'            " 多语言语法支持（C++增强）
 Plug 'octol/vim-cpp-enhanced-highlight' " C++ 类型、模板等额外高亮
 Plug 'morhetz/gruvbox'
 Plug 'joshdick/onedark.vim'
