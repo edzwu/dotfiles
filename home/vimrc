@@ -129,9 +129,10 @@ let g:vim_markdown_new_list_item_indent = 2
 " ------------------------------
 " 插件系统：vim-plug
 " ------------------------------
-" TypeScript 高亮用 Vim 9.1 内置 yats（与 polyglot 打包版同源）。
-" 曾在部分 TS 文件翻页时触发 'redrawtime exceeded'，一度用自写轻量语法
-" 替代，后恢复内置；若再遇到 redrawtime 报错，调大 redrawtime 而非换语法。
+" TypeScript 高亮使用 Vim 9.1 内置 yats（与 polyglot 打包版同源）。
+" Apple Vim 默认 regexpengine=1（旧引擎），处理 yats 复杂正则时会极慢；
+" yats 官方建议使用自动选择引擎（re=0），本机实测全文件解析从 28s 降至 0.013s。
+set regexpengine=0
 set redrawtime=5000
 
 call plug#begin('~/.vim/plugged')
