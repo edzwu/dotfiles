@@ -67,9 +67,14 @@ set foldenable
 " let g:gutentags_trace = 1
 let g:gutentags_define_advanced_commands = 1
 
-" Use gtags' builtin parser for full call-site references in GRTAGS;
-" its universal-ctags plugin does not provide complete cscope \cs results
-let $GTAGSLABEL = 'default'
+" gtags 解析器:内置优先 + pygments 兜底 (native-pygments)
+" - 内置解析器(C/C++/Java/PHP):GRTAGS 含完整调用点引用,保留 \cs 查询质量
+" - pygments 兜底(TS/JS/Python 等):提供定义与符号引用。此前因依赖
+"   /usr/bin/ctags-exuberant(常缺失)被禁用;Homebrew 新版(6.6.14)已改用
+"   universal-ctags 且自带 libexec python 内置 pygments,现已可用
+" - 注意:pygments 是词法解析,TS 的调用链查询(\cc/\cd)仍不完整,
+"   TS 追调用链请用 LSP 的 \lr
+let $GTAGSLABEL = 'native-pygments'
 let $GTAGSCONF = expand('~/.global/gtags.conf')
 
 " ctags fallback: include signature info for nicer display
