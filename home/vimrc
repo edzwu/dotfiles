@@ -272,6 +272,15 @@ nnoremap <leader>qh :colder<CR>
 nnoremap <leader>qH :cnewer<CR>
 " fzf Rg 结果直接进 quickfix（第 3 层）：\G 全局搜，结果统一走 qf 预览/翻页
 nnoremap <leader>G :Rg!<Space>
+
+" ------------------------------
+" 方案 C: gtags 结果 → fzf 弹窗(bat 预览)→ 多选进 quickfix
+" \fd 定义 / \fr 引用 / \fc 调用者(谁调用了它)
+" 单选 Enter 直接跳; Tab 多选后 Enter 进 quickfix 工作台(p/]q/\qh 接管)
+" 注意: 精确引用(类型感知)仍用 \lr(LSP); \fr 是 gtags 名字匹配版
+nnoremap <silent> <leader>fd :call gtags_fzf#run('g', 'def')<CR>
+nnoremap <silent> <leader>fr :call gtags_fzf#run('r', 'ref')<CR>
+nnoremap <silent> <leader>fc :call gtags_fzf#run('c', 'call')<CR>
 " ------------------------------
 " ALE：保存时自动格式化
 " ------------------------------

@@ -105,6 +105,12 @@ nnoremap <leader>G :Rg!<Space>   " 结果直接进 quickfix,配合 p 预览 + ]q
 - [x] 第 1 层:vim-preview(qf 内 p/P 预览、F3/F4、Alt+U/D),已安装
 - [x] 第 2 层:ctags --fields=+nS(需重新生成 *-tags 缓存后生效)
 - [x] 第 3 层:\G = Rg! 结果进 quickfix
+- [x] 方案 C:gtags 结果 → fzf 弹窗(bat 预览)→ 多选进 quickfix
+    (home/vim/autoload/gtags_fzf.vim,键位 \fd/\fr/\fc)
+    - 单选 Enter 直接跳;Tab 多选后 Enter 进 quickfix 工作台
+    - 实现:gtags_fzf#run → gtags_fzf#items(解析 global -x/-xr、gtags-cscope -L3)→
+      fzf#run(--multi + bat 预览)→ gtags_fzf#apply(单选快跳/多选 setqflist)
+    - 依赖:gtags(名字匹配) + fzf.vim + bat;精确引用仍用 \lr
 
 ### 待验证(用真实项目跑一遍)
 
