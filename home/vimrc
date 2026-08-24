@@ -77,8 +77,9 @@ let g:gutentags_define_advanced_commands = 1
 let $GTAGSLABEL = 'native-pygments'
 let $GTAGSCONF = expand('~/.global/gtags.conf')
 
-" ctags fallback: include signature info for nicer display
-let g:gutentags_ctags_extra_args = ['--fields=+S']
+" ctags fallback: include line number + signature for nicer display
+" (vim-preview 的 PreviewTag/PreviewSignature 需要 +n 行号字段)
+let g:gutentags_ctags_extra_args = ['--fields=+nS']
 
 " 设置 cache 目录（可选）
 let g:gutentags_cache_dir = expand('~/.cache/tags')
@@ -144,6 +145,7 @@ Plug 't9md/vim-quickhl'
 " 适配 gtags 的插件 
 Plug 'ludovicchabant/vim-gutentags'
 Plug 'skywind3000/gutentags_plus'
+Plug 'skywind3000/vim-preview'   " quickfix/标签预览（已停维护，纯 VimScript 零依赖）
 
 " Git
 Plug 'tpope/vim-fugitive'
@@ -251,6 +253,25 @@ inoremap <F5> <C-r>=strftime('%Y-%m-%d %H:%M:%S')<CR>
 
 " 最近打开过的文件（跨 session，来自 v:oldfiles）
 nnoremap <leader>o :History<CR>
+
+" ------------------------------
+" quickfix 增强（第 0 层）：追调用链基本盘
+" ------------------------------
+" 快速导航
+nnoremap ]q :cnext<CR>
+nnoremap [q :cprev<CR>
+nnoremap ]Q :clast<CR>
+nnoremap [Q :cfirst<CR>
+nnoremap <leader>q :copen<CR>
+nnoremap <leader>Q :cclose<CR>
+" 有结果才自动弹 quickfix（\cc/\cd 等 cscope 查询后）
+autocmd QuickFixCmdPost * cwindow
+" quickfix 历史回溯（vim 8+ 原生 colder/cnewer，无需插件）：
+" \cc 连续查多个符号后，\qh 翻回上一次的结果
+nnoremap <leader>qh :colder<CR>
+nnoremap <leader>qH :cnewer<CR>
+" fzf Rg 结果直接进 quickfix（第 3 层）：\G 全局搜，结果统一走 qf 预览/翻页
+nnoremap <leader>G :Rg!<Space>
 " ------------------------------
 " ALE：保存时自动格式化
 " ------------------------------
@@ -365,3 +386,21 @@ nnoremap <silent> ]g :LspNextDiagnostic<CR>
 
 " LSP debug (uncomment when troubleshooting)
 " let g:lsp_log_file = expand('~/.cache/vim-lsp.log')
+
+" ------------------------------
+" vim-preview（第 1 层）：quickfix 预览 & 标签预览
+" 已停止维护，但纯 VimScript 零依赖；若体验不佳换 vim-quickui，键位无缝迁移
+" ------------------------------
+" quickfix 窗口：p 预览当前项，P 关闭预览，Enter 正常跳转
+" 追调用链时先看再跳，不用来回切窗口
+" 预览窗口用 <C-w>z 或 :pclose 关闭
+au FileType qf nnoremap <silent><buffer> p :PreviewQuickfix<cr>
+au FileType qf nnoremap <silent><buffer> P :PreviewClose<cr>
+" F3: 循环预览光标下符号的定义（重载/多文件同名时反复按）
+noremap <F3> :PreviewTag<cr>
+" F4: 命令栏显示最近函数签名（插入模式可用，不用离开 insert）
+noremap <F4> :PreviewSignature!<cr>
+inoremap <F4> <c-\><c-o>:PreviewSignature!<cr>
+" Alt+U/D: 滚动预览窗口，不离开当前窗口（终端需 Option 当 Meta 用）
+noremap <m-u> :PreviewScroll -1<cr>
+noremap <m-d> :PreviewScroll +1<cr>

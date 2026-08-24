@@ -101,7 +101,14 @@ nnoremap <leader>G :Rg!<Space>   " 结果直接进 quickfix,配合 p 预览 + ]q
 ## 实施状态
 
 - [x] gtags 修复:GTAGSLABEL → native-pygments(vimrc + profile.d + gtags.conf + 缓存清理 + 软链接恢复)
-- [ ] 第 0 层(建议)
-- [ ] 第 1 层 vim-preview(建议,先试)
-- [ ] 第 2 层(可选)
-- [ ] 第 3 层(可选)
+- [x] 第 0 层:quickfix 导航(]q/[q/]Q/[Q/\q/\Q)+ 自动弹窗 + 历史回溯(\qh/\qH)
+- [x] 第 1 层:vim-preview(qf 内 p/P 预览、F3/F4、Alt+U/D),已安装
+- [x] 第 2 层:ctags --fields=+nS(需重新生成 *-tags 缓存后生效)
+- [x] 第 3 层:\G = Rg! 结果进 quickfix
+
+### 待验证(用真实项目跑一遍)
+
+1. 打开 TS 项目,\cc → quickfix 自动弹出 → 移动光标 → p 预览 → Enter 跳转 → <C-w>z 关预览
+2. 连续 \cc 查两个符号后,\qh 翻回第一个结果
+3. 光标停函数名 F3 循环预览定义;插入模式输 `funcName(` 后 F4 看签名
+4. \G 全局搜一个词,结果进 quickfix 后可 ]q/[q 翻页 + p 预览
