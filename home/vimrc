@@ -119,16 +119,17 @@ let g:bookmark_highlight_lines = 1
 " ------------------------------
 " 插件预配置（必须在 plug#begin 之前）
 " ------------------------------
-let g:polyglot_disabled = ['autoindent', 'typescript', 'typescriptreact', 'tsx', 'graphql']
+let g:polyglot_disabled = ['autoindent', 'graphql']
 let g:vim_markdown_new_list_item_indent = 2
 
 " ------------------------------
 " 插件系统：vim-plug
 " ------------------------------
-" vim-polyglot 和 Vim 9.1 内置 TypeScript syntax 都基于 yats，
-" 某些 TS 文件翻页时会触发 'redrawtime exceeded'。
-" 这里禁用 polyglot 对 TypeScript/TSX 的覆盖，并由 ~/.vim/syntax/typescript*.vim
-" 提供轻量高亮；只影响 TS/TSX 文件，不影响 C++、Python 等其他语言。
+" TypeScript 高亮用 vim-polyglot 内置的 yats（完整语法：类型/泛型/JSX）。
+" 曾在部分 TS 文件翻页时触发 'redrawtime exceeded'，故一度用自写轻量语法
+" 替代；自写语法维护成本高且出过块内高亮丢失的 bug，现恢复 yats。
+" 若再遇到 redrawtime 报错，调大 redrawtime 而非换语法。
+set redrawtime=5000
 
 call plug#begin('~/.vim/plugged')
 
