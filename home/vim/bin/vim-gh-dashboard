@@ -2,7 +2,7 @@
 """Generate GitHub dashboard for Vim startify.
 
 Shows:
-- GitHub contribution heatmap (based on actual commits across all repos)
+- Contribution heatmap (GitHub commits + local unpushed commits under ~/repo)
 - Top 10 active repositories
 - Recently updated repositories
 
@@ -93,11 +93,36 @@ def get_git_identity():
 
 
 # ---------------------------------------------------------------------------
+# GitHub identity (dynamic, survives account renames)
+# ---------------------------------------------------------------------------
+_GH_LOGIN_CACHE = None
+
+
+def get_gh_login():
+    """Return the currently authenticated GitHub login (cached)."""
+    global _GH_LOGIN_CACHE
+    if _GH_LOGIN_CACHE:
+        return _GH_LOGIN_CACHE
+    try:
+        result = subprocess.run(
+            ["gh", "api", "user", "--jq", ".login"],
+            capture_output=True, text=True, timeout=5
+        )
+        if result.returncode == 0:
+            _GH_LOGIN_CACHE = result.stdout.strip()
+    except Exception:
+        pass
+    return _GH_LOGIN_CACHE or ""
+
+
+# ---------------------------------------------------------------------------
 # Repo listing
 # ---------------------------------------------------------------------------
-def get_all_repos():
+def get_all_repos(owner):
+    if not owner:
+        return []
     result = subprocess.run([
-        "gh", "repo", "list", "zw4315", "--limit", "100",
+        "gh", "repo", "list", owner, "--limit", "100",
         "--json", "name,defaultBranchRef"
     ], capture_output=True, text=True)
     if result.returncode != 0:
@@ -111,10 +136,10 @@ def get_all_repos():
 # ---------------------------------------------------------------------------
 # Commit fetching (per repo) -> returns (dates, count)
 # ---------------------------------------------------------------------------
-def get_repo_commit_info(repo_name, since, until, git_name, git_email):
+def get_repo_commit_info(repo_name, owner, since, until, git_name, git_email):
     cmd = [
         "gh", "api",
-        f"repos/zw4315/{repo_name}/commits?since={since}&until={until}&per_page=100",
+        f"repos/{owner}/{repo_name}/commits?since={since}&until={until}&per_page=100",
         "--paginate",
         "--jq",
         '.[] | {login: (.author.login // ""), name: .commit.author.name, email: .commit.author.email, date: .commit.author.date[:10]}',
@@ -140,11 +165,11 @@ def get_repo_commit_info(repo_name, since, until, git_name, git_email):
 
         # Multi-dimensional match: GitHub login, git email, git name, or known patterns
         if (
-            login == "zw4315"
+            login == owner
             or email == git_email
             or name_lower == git_name_lower
             or "edward" in name_lower
-            or name == "zw4315"
+            or name == owner
         ):
             date_str = obj.get("date")
             if date_str:
@@ -172,6 +197,54 @@ def aggregate_repo_daily(repo_daily):
     return daily, repo_stats
 
 
+# ---------------------------------------------------------------------------
+# Local repos (covers unpushed commits)
+# ---------------------------------------------------------------------------
+LOCAL_REPOS_DIR = Path.home() / "repo"
+
+
+def get_local_repos():
+    """Return [(name, path)] for git repos directly under ~/repo."""
+    repos = []
+    try:
+        for child in sorted(LOCAL_REPOS_DIR.iterdir()):
+            if child.is_dir() and (child / ".git").exists():
+                repos.append((child.name, child))
+    except Exception:
+        pass
+    return repos
+
+
+def get_local_commit_dates(repo_path, cutoff_date, git_name, git_email):
+    """Return {date: count} of the user's local commits across all branches."""
+    try:
+        result = subprocess.run(
+            ["git", "-C", str(repo_path), "log", "--all",
+             f"--since={cutoff_date.isoformat()}",
+             "--format=%an%x09%ae%x09%ad", "--date=short"],
+            capture_output=True, text=True, timeout=15,
+        )
+    except Exception:
+        return {}
+    if result.returncode != 0:
+        return {}
+    counts = {}
+    git_name_lower = git_name.lower()
+    for line in result.stdout.splitlines():
+        parts = line.split("\t")
+        if len(parts) != 3:
+            continue
+        name, email, date_str = parts
+        if not (email == git_email or name.lower() == git_name_lower
+                or "edward" in name.lower()):
+            continue
+        # --since 按 committer date 过滤，这里再按 author date 卡窗口
+        if datetime.strptime(date_str, "%Y-%m-%d").date() < cutoff_date:
+            continue
+        counts[date_str] = counts.get(date_str, 0) + 1
+    return counts
+
+
 def get_all_commit_info():
     cache = load_daily_cache()
 
@@ -197,12 +270,13 @@ def get_all_commit_info():
     since = datetime.combine(since_date, datetime.min.time()).strftime("%Y-%m-%dT00:00:00Z")
     until = now.strftime("%Y-%m-%dT23:59:59Z")
     git_name, git_email = get_git_identity()
-    repos = get_all_repos()
+    gh_login = get_gh_login()
+    repos = get_all_repos(gh_login)
 
     new_repo_daily = {}
     with ThreadPoolExecutor(max_workers=5) as executor:
         futures = {
-            executor.submit(get_repo_commit_info, r['name'], since, until, git_name, git_email): r['name']
+            executor.submit(get_repo_commit_info, r['name'], gh_login, since, until, git_name, git_email): r['name']
             for r in repos
         }
         for future in futures:
@@ -231,6 +305,19 @@ def get_all_commit_info():
             repo_daily[repo_name] = filtered
         else:
             del repo_daily[repo_name]
+
+    # 合并本地仓库提交（含未 push 的）。本地 git log 开销小，每次全量重算；
+    # 与 GitHub API 数据按 repo+date 取 max，避免已推送提交被重复计数。
+    for local_name, local_path in get_local_repos():
+        local_daily = get_local_commit_dates(local_path, cutoff, git_name, git_email)
+        if not local_daily:
+            continue
+        if local_name not in repo_daily:
+            repo_daily[local_name] = {}
+        for date_str, count in local_daily.items():
+            repo_daily[local_name][date_str] = max(
+                repo_daily[local_name].get(date_str, 0), count
+            )
 
     daily_counts, repo_stats = aggregate_repo_daily(repo_daily)
 
@@ -371,7 +458,7 @@ def generate_heatmap(data, weeks=None):
     total = calendar.get("totalContributions", 0)
     lines.append("")
     lines.append("   Legend: ░ low  ▒ mid  ▓ high  █ peak")
-    lines.append(f"   {total} commits in the last year")
+    lines.append(f"   {total} commits in the last {len(recent_weeks)} weeks")
     return [line.rstrip() for line in lines]
 
 
@@ -457,7 +544,7 @@ def main():
 
             data = build_calendar_from_daily(daily_counts)
             output.append("  GitHub Contribution Heatmap")
-            output.append("  (based on actual commits across all repos)")
+            output.append("  (GitHub + local unpushed commits)")
             output.append("")
             output.extend(generate_heatmap(data))
             output.append("")
