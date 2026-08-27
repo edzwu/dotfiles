@@ -37,6 +37,9 @@ def load_daily_cache():
 
 WEEKS_TO_SHOW = 20
 
+# 不参与统计的仓库（如 gitee 上的非代码仓库）
+EXCLUDED_REPOS = {"append-review"}
+
 
 def save_daily_cache(data, complete_through=None):
     cache_file = get_daily_cache_path()
@@ -128,7 +131,8 @@ def get_all_repos(owner):
     if result.returncode != 0:
         return []
     try:
-        return json.loads(result.stdout)
+        repos = json.loads(result.stdout)
+        return [r for r in repos if r.get("name") not in EXCLUDED_REPOS]
     except Exception:
         return []
 
@@ -208,7 +212,7 @@ def get_local_repos():
     repos = []
     try:
         for child in sorted(LOCAL_REPOS_DIR.iterdir()):
-            if child.is_dir() and (child / ".git").exists():
+            if child.is_dir() and (child / ".git").exists() and child.name not in EXCLUDED_REPOS:
                 repos.append((child.name, child))
     except Exception:
         pass
@@ -257,6 +261,7 @@ def get_all_commit_info():
     complete_through = None
     if cache and 'data' in cache:
         repo_daily = cache['data'].get('repo_daily', {})
+        repo_daily = {k: v for k, v in repo_daily.items() if k not in EXCLUDED_REPOS}
         complete_through = cache.get('complete_through')
 
     now = datetime.now()
