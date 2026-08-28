@@ -34,15 +34,6 @@ function! s:ui_open() abort
   endif
 endfunction
 
-function! s:ui_close() abort
-  if exists('s:bufnr') && bufexists(s:bufnr)
-    let l:winid = bufwinid(s:bufnr)
-    if l:winid != -1
-      call win_execute(l:winid, 'close')
-    endif
-  endif
-endfunction
-
 function! s:ui_render(lines) abort
   call s:ui_open()
   " 先覆盖写再删尾巴：buffer 始终不为空，避免 --No lines in buffer-- 闪烁
@@ -65,11 +56,6 @@ function! s:progress(msg) abort
     let s:lines = s:lines[-3:]
   endif
   call s:ui_render(s:lines)
-endfunction
-
-function! s:progress_done() abort
-  let s:lines = []
-  call s:ui_close()
 endfunction
 
 function! pi_calltree#complete(A, L, P) abort
@@ -405,7 +391,7 @@ function! s:on_pi_exit(html_path, job, status) abort
   let l:status = type(a:status) == v:t_number ? a:status : -1
   let s:pi = {}   " 停掉心跳 timer（下一轮自己 timer_stop）
   call s:log('pi 退出，status=' . l:status)
-  call s:progress_done()
+  let s:lines = []   " 清空过程行，只留结果行；窗口不关，用 q/Esc 手动关
   if l:status == 0 && filereadable(l:path)
     let l:url = 'file://' . l:path
     if get(g:, 'pi_calltree_serve', 1) && !empty(exepath('python3')) && s:ensure_server()
@@ -413,7 +399,7 @@ function! s:on_pi_exit(html_path, job, status) abort
     endif
     call s:log('HTML: ' . l:url)
     " 留在底部窗口（可用 gx 打开），同时 echom 到消息区（终端 Ctrl/Cmd+点击）
-    call s:progress('✓ ' . l:url . '  (gx 打开)')
+    call s:progress('✓ ' . l:url . '  (gx 打开，q 关闭)')
     echom '[pi-calltree] ' . l:url
     if get(g:, 'pi_calltree_auto_open', 0)
       call system(['open', l:path])
