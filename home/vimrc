@@ -164,6 +164,7 @@ Plug 't9md/vim-quickhl'
 Plug 'ludovicchabant/vim-gutentags'
 Plug 'skywind3000/gutentags_plus'
 Plug 'skywind3000/vim-preview'   " quickfix/标签预览（已停维护，纯 VimScript 零依赖）
+Plug 'itchyny/vim-qfedit'        " quickfix/location 列表可编辑：dd 删条目直接同步列表
 
 " Git
 Plug 'tpope/vim-fugitive'
