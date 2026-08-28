@@ -315,7 +315,8 @@ function! s:maybe_finish() abort
     let s:pi.job = l:job
     call timer_start(3000, function('s:pi_heartbeat'), {'repeat': -1})
   else
-    call system(['pi', '-p', '--no-session', '--tools', 'read,write', l:prompt])
+    " 注意: autoload 里 system(List) 会抛 E730（本 vim 构建的 bug），用 String 形式
+    call system('pi -p --no-session --tools read,write ' . shellescape(l:prompt))
     call s:on_pi_exit(l:html_path, 0, v:shell_error)
   endif
 endfunction
@@ -390,7 +391,7 @@ function! s:on_pi_exit(html_path, job, status) abort
     call s:progress('✓ ' . l:url . '  (gx 打开，:cclose 关闭)')
     echom '[pi-calltree] ' . l:url
     if get(g:, 'pi_calltree_auto_open', 0)
-      call system(['open', l:path])
+      call system('open ' . shellescape(l:path))
     endif
   else
     call s:progress('✗ pi 生成失败 (exit ' . l:status . ')。日志: ' . s:logfile())
