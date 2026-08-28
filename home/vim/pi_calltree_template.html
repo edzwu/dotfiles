@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>__TITLE__</title>
+<style>
+  :root {
+    --bg: #1a1b26; --bg2: #1f2335; --border: #2a2e42;
+    --text: #c0caf5; --muted: #565f89; --mono: "SF Mono", Menlo, Consolas, monospace;
+    --s1: #7aa2f7; --s2: #bb9af7; --s3: #7dcfff; --s4: #e0af68; --s5: #9ece6a;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font: 14px/1.6 -apple-system, "PingFang SC", sans-serif; padding: 24px 32px 80px; max-width: 1100px; margin: 0 auto; }
+  h1 { font-size: 20px; margin-bottom: 4px; }
+  .sub { color: var(--muted); font-size: 13px; margin-bottom: 16px; }
+  .sub code { font-family: var(--mono); color: var(--s3); }
+
+  .toolbar { position: sticky; top: 0; z-index: 10; display: flex; gap: 8px; align-items: center; flex-wrap: wrap;
+             background: var(--bg); padding: 12px 0; border-bottom: 1px solid var(--border); margin-bottom: 16px; }
+  .toolbar button { background: var(--bg2); color: var(--text); border: 1px solid var(--border); border-radius: 6px;
+                    padding: 5px 12px; font-size: 12px; cursor: pointer; }
+  .toolbar button:hover:not(:disabled) { border-color: var(--s1); color: var(--s1); }
+  .toolbar button:disabled { opacity: .35; cursor: default; }
+  #depthLabel { color: var(--muted); font-size: 12px; font-family: var(--mono); min-width: 64px; text-align: center; user-select: none; }
+  #filter { background: var(--bg2); border: 1px solid var(--border); border-radius: 6px; color: var(--text);
+            padding: 5px 10px; font-size: 13px; width: 220px; outline: none; font-family: var(--mono); }
+  #filter:focus { border-color: var(--s1); }
+  #filter::placeholder { color: var(--muted); font-family: -apple-system, sans-serif; }
+
+  .tree ul { list-style: none; padding-left: 26px; position: relative; }
+  .tree > ul { padding-left: 0; }
+  .tree ul ul::before { content: ""; position: absolute; left: 9px; top: -4px; bottom: 8px; width: 1px; background: var(--border); }
+  .tree li { position: relative; margin: 2px 0; }
+  .tree ul ul li::before { content: ""; position: absolute; left: -17px; top: 16px; width: 15px; height: 1px; background: var(--border); }
+
+  .node { display: inline-flex; align-items: baseline; gap: 8px; padding: 4px 10px; border-radius: 8px;
+          cursor: default; max-width: 100%; flex-wrap: wrap; }
+  .node:hover { background: var(--bg2); }
+  .node.has-children { cursor: pointer; }
+  .toggle { display: inline-block; width: 14px; color: var(--muted); font-size: 10px; user-select: none;
+            transition: transform .15s; flex-shrink: 0; align-self: center; }
+  .toggle.open { transform: rotate(90deg); }
+  .name { font-family: var(--mono); font-size: 13.5px; }
+  .loc { font-family: var(--mono); font-size: 11px; color: var(--muted); }
+  .desc { font-size: 12.5px; color: var(--muted); }
+  .hidden-count { font-size: 11px; color: var(--muted); }
+  li.collapsed > ul { display: none; }
+  mark { background: #e0af6855; color: #e0af68; border-radius: 2px; padding: 0 1px; }
+
+  .stage-1 .name { color: var(--s1); }
+  .stage-2 .name { color: var(--s2); }
+  .stage-3 .name { color: var(--s3); }
+  .stage-4 .name { color: var(--s4); }
+  .stage-5 .name { color: var(--s5); }
+  .stage-0 .name { color: #fff; font-weight: 600; }
+  li.filtered-out { display: none; }
+</style>
+</head>
+<body>
+<h1>__TITLE__</h1>
+<div class="sub">__SUBTITLE__</div>
+
+<div class="toolbar">
+  <button id="zoomOut" title="收起一层 (-)">−</button>
+  <span id="depthLabel"></span>
+  <button id="zoomIn" title="展开一层 (+)">+</button>
+  <button id="toggleAll">全部展开</button>
+  <input id="filter" placeholder="过滤… (Esc 清空)">
+</div>
+
+<div class="tree" id="tree"></div>
+
+<script>
+const DATA = __TREE_DATA__;
+
+function buildNode(data, depth) {
+  const li = document.createElement('li');
+  li.dataset.depth = depth;
+  const node = document.createElement('div');
+  node.className = `node stage-${data.stage ?? 1}`;
+  if (data.children) node.classList.add('has-children');
+
+  if (data.children) {
+    const t = document.createElement('span');
+    t.className = 'toggle open'; t.textContent = '▶';
+    node.appendChild(t);
+  }
+  const n = document.createElement('span');
+  n.className = 'name'; n.textContent = data.name;
+  node.appendChild(n);
+  if (data.loc) {
+    const l = document.createElement('span');
+    l.className = 'loc'; l.textContent = data.loc;
+    node.appendChild(l);
+  }
+  if (data.desc) {
+    const d = document.createElement('span');
+    d.className = 'desc'; d.textContent = data.desc;
+    node.appendChild(d);
+  }
+  const cnt = document.createElement('span');
+  cnt.className = 'hidden-count'; cnt.style.display = 'none';
+  node.appendChild(cnt);
+  li.appendChild(node);
+
+  if (data.children) {
+    const ul = document.createElement('ul');
+    data.children.forEach(c => ul.appendChild(buildNode(c, depth + 1)));
+    li.appendChild(ul);
+    node.addEventListener('click', () => toggle(li));
+  }
+  return li;
+}
+
+function countDesc(li) {
+  let n = 0;
+  li.querySelectorAll(':scope > ul > li').forEach(c => { n += 1 + countDesc(c); });
+  return n;
+}
+function setCollapsed(li, collapsed) {
+  li.classList.toggle('collapsed', collapsed);
+  const t = li.querySelector(':scope > .node > .toggle');
+  if (t) t.classList.toggle('open', !collapsed);
+  const cnt = li.querySelector(':scope > .node > .hidden-count');
+  if (cnt && li.querySelector(':scope > ul')) {
+    cnt.style.display = collapsed ? '' : 'none';
+    if (collapsed) cnt.textContent = `+${countDesc(li)} 折叠`;
+  }
+}
+function toggle(li) { setCollapsed(li, !li.classList.contains('collapsed')); }
+function collapseTo(maxDepth) {
+  document.querySelectorAll('#tree li').forEach(li => {
+    const d = +li.dataset.depth;
+    if (li.querySelector(':scope > ul')) setCollapsed(li, d >= maxDepth);
+  });
+}
+
+const rootUl = document.createElement('ul');
+rootUl.appendChild(buildNode(DATA, 0));
+document.getElementById('tree').appendChild(rootUl);
+
+// ---- 层级缩放：currentDepth = 展开到第几层（根为 0） ----
+const zoomOutBtn = document.getElementById('zoomOut');
+const zoomInBtn = document.getElementById('zoomIn');
+const depthLabel = document.getElementById('depthLabel');
+const toggleBtn = document.getElementById('toggleAll');
+let maxDepth = 0;
+document.querySelectorAll('#tree li').forEach(li => {
+  const d = +li.dataset.depth;
+  if (d > maxDepth) maxDepth = d;
+});
+let currentDepth = 2;
+
+function applyDepth() {
+  // 到达最深层时彻底展开（collapseTo 会收起 depth >= 参数的节点，所以最深层要 +1）
+  collapseTo(currentDepth >= maxDepth ? maxDepth + 1 : currentDepth);
+  depthLabel.textContent = `层级 ${Math.min(currentDepth, maxDepth)}/${maxDepth}`;
+  zoomOutBtn.disabled = currentDepth <= 0;
+  zoomInBtn.disabled = currentDepth >= maxDepth;
+  toggleBtn.textContent = currentDepth >= maxDepth ? '全部折叠' : '全部展开';
+}
+zoomOutBtn.addEventListener('click', () => { currentDepth = Math.max(0, currentDepth - 1); applyDepth(); });
+zoomInBtn.addEventListener('click', () => { currentDepth = Math.min(maxDepth, currentDepth + 1); applyDepth(); });
+toggleBtn.addEventListener('click', () => {
+  currentDepth = currentDepth >= maxDepth ? 2 : maxDepth;
+  applyDepth();
+  if (currentDepth >= maxDepth) clearFilter(false);
+});
+// 键盘：- 收起一层，+/= 展开一层，0 回到默认
+addEventListener('keydown', e => {
+  if (e.target === filterEl) return;
+  if (e.key === '-') { currentDepth = Math.max(0, currentDepth - 1); applyDepth(); }
+  else if (e.key === '+' || e.key === '=') { currentDepth = Math.min(maxDepth, currentDepth + 1); applyDepth(); }
+  else if (e.key === '0') { currentDepth = 2; applyDepth(); }
+});
+
+const filterEl = document.getElementById('filter');
+function clearFilter(reset = true) {
+  filterEl.value = '';
+  document.querySelectorAll('#tree li').forEach(li => {
+    li.classList.remove('filtered-out');
+    li.querySelectorAll('mark').forEach(m => m.replaceWith(m.textContent));
+  });
+  if (reset) { currentDepth = 2; applyDepth(); }
+}
+applyDepth();
+filterEl.addEventListener('input', () => {
+  const q = filterEl.value.trim().toLowerCase();
+  document.querySelectorAll('#tree mark').forEach(m => m.replaceWith(m.textContent));
+  if (!q) { clearFilter(); return; }
+  const lis = [...document.querySelectorAll('#tree li')];
+  lis.forEach(li => li.classList.add('filtered-out'));
+  lis.forEach(li => {
+    const node = li.querySelector(':scope > .node');
+    const text = node.textContent.toLowerCase();
+    if (text.includes(q)) {
+      li.classList.remove('filtered-out');
+      let p = li.parentElement.closest('li');
+      while (p) { p.classList.remove('filtered-out'); setCollapsed(p, false); p = p.parentElement.closest('li'); }
+      node.querySelectorAll('.name, .loc, .desc').forEach(span => {
+        const t = span.textContent, i = t.toLowerCase().indexOf(q);
+        if (i >= 0) span.innerHTML = t.slice(0, i) + '<mark>' + t.slice(i, i + q.length) + '</mark>' + t.slice(i + q.length);
+      });
+    }
+  });
+});
+filterEl.addEventListener('keydown', e => { if (e.key === 'Escape') clearFilter(); });
+</script>
+</body>
+</html>
