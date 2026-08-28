@@ -1,7 +1,7 @@
 " autoload/pi_calltree.vim — 核心实现
 " 流程: prepareCallHierarchy → 递归 out/incomingCalls → JSON → pi -p 生成 HTML → 本地 HTTP 打开
 " 输出: ~/.cache/pi-calltree/*.html，经 python3 -m http.server 以 http://127.0.0.1:8777/<file>.html 访问
-" 诊断: 日志文件（默认 /tmp/pi-calltree.log）+ 底部进度窗（pi 阶段 3s 心跳）+ 90s LSP watchdog
+" 诊断: 日志文件（默认 /tmp/pi-calltree.log）+ quickfix 进度窗（pi 阶段 3s 心跳）+ 90s LSP watchdog
 " 配置: let g:pi_calltree_log = '/tmp/pi-calltree.log'
 "       let g:pi_calltree_serve = 0       " 置 0 回退 file:// 打开
 "       let g:pi_calltree_port = 8777     " 本地静态服务端口
@@ -17,34 +17,21 @@ function! s:log(msg) abort
   call writefile([strftime('%H:%M:%S') . ' ' . a:msg], s:logfile(), 'a')
 endfunction
 
-" ---- 进度显示：底部 scratch 窗口（quickfix 同款位置）+ echo + 日志 ----
-function! s:ui_open() abort
-  if !exists('s:bufnr') || !bufexists(s:bufnr)
-    let s:bufnr = bufadd('pi-calltree://progress')
-    call bufload(s:bufnr)
-    call setbufvar(s:bufnr, '&buftype', 'nofile')
-    call setbufvar(s:bufnr, '&bufhidden', 'wipe')
-    call setbufvar(s:bufnr, '&swapfile', 0)
+" ---- 进度显示：quickfix 窗口 + echo + 日志 ----
+" 每次运行新建一个 qf 列表（action ' '），用户已有的 grep/lsp 列表留在栈里（:colder 可回）
+function! s:ui_render(lines) abort
+  if !exists('s:qfid') | let s:qfid = 0 | endif
+  let l:what = {'title': 'pi-calltree', 'items': map(copy(a:lines), '{"text": v:val}')}
+  " 更新本插件的 qf 列表；列表已被清掉（返回 -1）就新建
+  if s:qfid == 0 || setqflist([], 'r', extend(copy(l:what), {'id': s:qfid})) == -1
+    call setqflist([], ' ', l:what)
+    let s:qfid = getqflist({'id': 0}).id
   endif
-  if bufwinid(s:bufnr) == -1
-    botright 4split
-    execute 'buffer ' . s:bufnr
-    setlocal nonumber norelativenumber signcolumn=no winfixheight
+  " 只在没打开时才 copen（copen 抢焦点，开完马上 wincmd p 退回）
+  if getqflist({'id': s:qfid, 'winid': 0}).winid == 0
+    botright copen 4
     wincmd p
   endif
-endfunction
-
-function! s:ui_render(lines) abort
-  call s:ui_open()
-  " 先覆盖写再删尾巴：buffer 始终不为空，避免 --No lines in buffer-- 闪烁
-  call setbufline(s:bufnr, 1, a:lines)
-  call deletebufline(s:bufnr, len(a:lines) + 1, '$')
-  " 全局 statusline 插件会覆盖我们的窗口设置，每次渲染强制压回纯文本
-  let l:winid = bufwinid(s:bufnr)
-  if l:winid != -1
-    call setwinvar(l:winid, '&statusline', ' pi-calltree')
-  endif
-  redraw
 endfunction
 
 function! s:progress(msg) abort
@@ -78,6 +65,7 @@ function! pi_calltree#start(...) abort
     endif
   endfor
   call writefile(['=== pi-calltree ' . strftime('%F %T') . ' ==='], s:logfile())
+  let s:qfid = 0   " 每次运行用新的 qf 列表，不覆盖上一轮结果
   " 并发守卫：上一个任务还在跑时不覆盖它的 state/pi，避免回调错乱
   if !empty(s:state)
     echoerr '[pi-calltree] 上一次 LSP 查询还在进行中，等进度窗归零再试'
@@ -391,7 +379,7 @@ function! s:on_pi_exit(html_path, job, status) abort
   let l:status = type(a:status) == v:t_number ? a:status : -1
   let s:pi = {}   " 停掉心跳 timer（下一轮自己 timer_stop）
   call s:log('pi 退出，status=' . l:status)
-  let s:lines = []   " 清空过程行，只留结果行；窗口不关，用 q/Esc 手动关
+  let s:lines = []   " 清空过程行，只留结果行；窗口不关，:cclose 手动关
   if l:status == 0 && filereadable(l:path)
     let l:url = 'file://' . l:path
     if get(g:, 'pi_calltree_serve', 1) && !empty(exepath('python3')) && s:ensure_server()
@@ -399,7 +387,7 @@ function! s:on_pi_exit(html_path, job, status) abort
     endif
     call s:log('HTML: ' . l:url)
     " 留在底部窗口（可用 gx 打开），同时 echom 到消息区（终端 Ctrl/Cmd+点击）
-    call s:progress('✓ ' . l:url . '  (gx 打开，q 关闭)')
+    call s:progress('✓ ' . l:url . '  (gx 打开，:cclose 关闭)')
     echom '[pi-calltree] ' . l:url
     if get(g:, 'pi_calltree_auto_open', 0)
       call system(['open', l:path])
