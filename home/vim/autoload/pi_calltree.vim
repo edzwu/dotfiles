@@ -287,6 +287,7 @@ endfunction
 function! s:maybe_finish() abort
   if empty(s:state) || s:state.pending > 0 | return | endif
   let l:roots = map(copy(s:state.roots), 's:strip(v:val)')
+  let l:server = s:state.server
   if len(l:roots) == 1
     let l:tree = l:roots[0]
   else
@@ -320,7 +321,7 @@ function! s:maybe_finish() abort
         \ '   - 只有 parents 没有 children：直接用 parents 作为根节点的 children',
         \ '   - stage：根节点 0；第一层子节点按所属模块分组循环分配 1-5；后代继承同组 stage',
         \ '2. __TITLE__ 替换为 "<根节点 name> · 调用关系树"',
-        \ '3. __SUBTITLE__ 替换为 "由 rust-analyzer call hierarchy 生成 · 点击节点展开/折叠"',
+        \ '3. __SUBTITLE__ 替换为 "由 ' . l:server . ' call hierarchy 生成 · 点击节点展开/折叠"',
         \ '4. 将结果写入: ' . l:html_path . ' 。除占位符外不要改动模板。',
         \ '5. 最后只回复一行：输出文件路径。',
         \ ], "\n")
