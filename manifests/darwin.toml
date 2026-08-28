@@ -14,7 +14,7 @@ ssh    = true   # SSH 客户端配置
 # zoxide 作为可选工具，不在 core 中默认安装
 
 [editor]
-nvim = flase   # Neovim 编辑器
+nvim = false   # Neovim 编辑器
 vim  = true   # 传统 Vim 编辑器
 tmux = true   # 终端复用器
 
