@@ -241,8 +241,9 @@ set termguicolors       " 推荐开启，颜色更准
 " ------------------------------
 " 快捷键配置
 " ------------------------------
-" 全局查找(合并窗口:直接输入=AST / k:=节点类型 / r:=rg 全文)
-nnoremap <leader>g :AstGrep<CR>
+" 全局查找(针对当前 repo 的 rg 全文搜索,按下即弹 fzf,输入实时过滤)
+" 与 filetype 无关,在 NERDTree 里也能用;AST 结构化搜索用 :AstGrep
+nnoremap <leader>g :Rg<CR>
 nnoremap <C-n> :NERDTreeToggle<CR>
 nnoremap <Leader>n :NERDTreeFind<CR>
 nnoremap <silent> <C-p> :Files<CR>
@@ -288,9 +289,8 @@ nnoremap <leader>Q :cclose<CR>
 " \cc 连续查多个符号后，\qh 翻回上一次的结果
 nnoremap <leader>qh :colder<CR>
 nnoremap <leader>qH :cnewer<CR>
-" 合并窗口全屏版(多选 alt-a 回车进 quickfix):
-" \g 全局搜,多选结果统一走 qf 预览/翻页
-nnoremap <leader>G :AstGrep!<CR>
+" 全屏版:多选 alt-a 回车进 quickfix,统一走 qf 预览/翻页
+nnoremap <leader>G :Rg!<CR>
 
 " ------------------------------
 " ALE：保存时自动格式化

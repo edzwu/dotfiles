@@ -120,6 +120,8 @@ kind_lines() {
         "${C_KD}k:match${C_RST}${TAB}${C_DIM}match 表达式(match_expression)${C_RST}" \
         "${C_KD}k:if${C_RST}${TAB}${C_DIM}if 表达式(if_expression)${C_RST}" \
         "${C_KD}k:for${C_RST}${TAB}${C_DIM}for 循环(for_expression)${C_RST}" \
+        "${C_KD}k:while${C_RST}${TAB}${C_DIM}while 循环(while_expression)${C_RST}" \
+        "${C_KD}k:loop${C_RST}${TAB}${C_DIM}loop 循环(loop_expression)${C_RST}" \
         "${C_KD}k:call${C_RST}${TAB}${C_DIM}函数/方法调用(call_expression)${C_RST}" \
         "${C_KD}k:macro${C_RST}${TAB}${C_DIM}宏调用(macro_invocation)${C_RST}" \
         "${C_KD}k:let${C_RST}${TAB}${C_DIM}let 绑定(let_declaration)${C_RST}" \
@@ -278,6 +280,8 @@ if [ "${q#k:}" != "$q" ]; then
     Rust:match)   kinds="match_expression" ;;
     Rust:if)      kinds="if_expression" ;;
     Rust:for)     kinds="for_expression" ;;
+    Rust:while)   kinds="while_expression" ;;
+    Rust:loop)    kinds="loop_expression" ;;
     Rust:call)    kinds="call_expression" ;;
     Rust:macro)   kinds="macro_invocation" ;;
     Rust:let)     kinds="let_declaration" ;;

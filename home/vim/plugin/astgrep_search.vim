@@ -19,6 +19,12 @@ if exists('g:loaded_astgrep_search')
 endif
 let g:loaded_astgrep_search = 1
 
+augroup astgrep_search_lang
+  autocmd!
+  " 记住最近代码 buffer 的语言,供 NERDTree 等窗口里按 \g 时回退
+  autocmd FileType * call astgrep_search#remember_lang()
+augroup END
+
 command! -bang -nargs=* AstGrep call astgrep_search#run(<q-args>, <bang>0)
 " 快捷键在 vimrc:\g = :AstGrep / \G = :AstGrep!
 " nnoremap <leader>a :AstGrep<CR>  " 如需 leader 键备选,取消注释

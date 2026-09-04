@@ -18,8 +18,13 @@ function! zw#rg#_preview() abort
 endfunction
 
 
-" mode: smart/case/exact/file
-function! zw#rg#run(mode, args) abort
+" mode: smart/case/exact/file;可选第三参 fullscreen(0/1)
+" smart 模式空参数 → 交互式窗口(按下即弹,输入实时过滤,全 repo 搜索)
+function! zw#rg#run(mode, args, ...) abort
+  let l:fullscreen = a:0 ? a:1 : 0
+  if a:mode ==# 'smart' && empty(a:args)
+    return zw#rg#interactive(l:fullscreen)
+  endif
   let base = zw#rg#_base()
   if a:mode ==# 'smart'
     let cmd = base . '--smart-case ' . a:args
@@ -34,7 +39,56 @@ function! zw#rg#run(mode, args) abort
   else
     echoerr 'Unknown mode: ' . a:mode | return
   endif
-  call fzf#vim#grep(cmd, 1, zw#rg#_preview(), 0)
+  call fzf#vim#grep(cmd, 1, zw#rg#_preview(), l:fullscreen)
+endfunction
+
+" ---------- 交互式全局搜索(\g:按下即弹,输入即搜,与 filetype 无关) ----------
+
+" 去除 ANSI 颜色码(rg --color=always 输出,fzf --ansi 渲染,sink 收到原始行)
+function! s:strip_ansi(s) abort
+  return substitute(a:s, '\%x1b\[[0-9;]*m', '', 'g')
+endfunction
+
+" 解析 file:lnum:col:text → quickfix dict
+function! s:to_qf(line) abort
+  let l:m = matchlist(s:strip_ansi(a:line), '^\(.\{-}\):\(\d\+\):\(\d\+\):\(.*\)$')
+  if empty(l:m[1]) || empty(l:m[2]) | return {} | endif
+  return {'filename': l:m[1], 'lnum': str2nr(l:m[2]), 'col': str2nr(l:m[3]), 'text': l:m[4]}
+endfunction
+
+" 单条跳转 / 多条(alt-a 全选)进 quickfix
+function! s:grep_sink(lines) abort
+  let l:list = filter(map(copy(a:lines), 's:to_qf(v:val)'), '!empty(v:val)')
+  if empty(l:list) | return | endif
+  if len(l:list) == 1
+    let l:item = l:list[0]
+    execute 'edit ' . fnameescape(l:item.filename)
+    call cursor(l:item.lnum, l:item.col)
+    normal! zvzz
+  else
+    call setqflist(l:list, 'r')
+    copen
+  endif
+endfunction
+
+function! zw#rg#interactive(bang) abort
+  " {q} 由 fzf 负责 shell-escape,勿再额外套引号;空 query 不触发搜索
+  let l:reload = zw#rg#_base() . '--smart-case -- {q} || true'
+  let l:spec = zw#rg#_preview()
+  let l:opts = {
+        \ 'source': 'true',
+        \ 'sink*': function('s:grep_sink'),
+        \ 'options': ['--ansi', '--disabled', '--prompt', 'Rg> ',
+        \             '--multi', '--bind', 'alt-a:select-all,alt-d:deselect-all',
+        \             '--bind', 'change:reload:' . l:reload,
+        \             '--header', '输入即全 repo rg 搜索 | alt-a 全选回车进 quickfix',
+        \             '--delimiter', ':', '--preview-window', '+{2}/2']
+        \ }
+  call extend(l:opts.options, l:spec.options)
+  if a:bang
+    let l:opts.fullscreen = 1
+  endif
+  return fzf#run(fzf#wrap(l:opts))
 endfunction
 
 " ---------- 旧逻辑：跨文件替换入口 ----------

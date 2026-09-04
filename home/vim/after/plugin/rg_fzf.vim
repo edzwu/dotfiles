@@ -22,7 +22,8 @@ endif
 let g:loaded_zw_rg_fzf = 1
 
 " ---- Rg 搜索命令（调用 autoload/zw/rg.vim） -------------------------------
-command! -nargs=* Rg      call zw#rg#run('smart', <q-args>)
+" :Rg 无参数 → 交互式窗口(按下即弹);带参数 → 直接搜索;! → 全屏
+command! -bang -nargs=* Rg      call zw#rg#run('smart', <q-args>, <bang>0)
 command! -nargs=* Rgcs  call zw#rg#run('case',  <q-args>)
 command! -nargs=* RgExact call zw#rg#run('exact', <q-args>)
 command! -nargs=* Rgf     call zw#rg#run('file',  <q-args>)

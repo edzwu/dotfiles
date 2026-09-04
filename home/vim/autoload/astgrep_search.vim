@@ -33,10 +33,22 @@ function! s:fail(msg) abort
   echoerr '[astgrep] ' . a:msg
 endfunction
 
-" 语言推断:g:astgrep_lang > filetype 映射
+" 语言推断:g:astgrep_lang > filetype 映射 > 最近用过的语言
+" (在 NERDTree 等无 filetype 的窗口按 \g 时回退到上个代码 buffer 的语言)
 function! s:detect_lang() abort
   let l:override = get(g:, 'astgrep_lang', '')
-  return empty(l:override) ? get(s:languages, &filetype, '') : l:override
+  if !empty(l:override)
+    return l:override
+  endif
+  return get(s:languages, &filetype, get(s:, 'last_lang', ''))
+endfunction
+
+" 记录最近的支持语言(FileType 自动命令调用,见 plugin/astgrep_search.vim)
+function! astgrep_search#remember_lang() abort
+  let l:lang = get(s:languages, &filetype, '')
+  if !empty(l:lang)
+    let s:last_lang = l:lang
+  endif
 endfunction
 
 " 解析 fzf 结果行 path:line[:col[:content]] → quickfix dict
