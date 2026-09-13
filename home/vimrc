@@ -68,6 +68,10 @@ set foldenable
 " 轻量且体验等价（实测 1.7s、折叠正常）。
 autocmd FileType typescript,typescriptreact,javascript,javascriptreact setlocal foldmethod=indent
 
+" HTML/XML：内置 html.vim 的标签折叠默认关闭，需显式开启
+" （必须在 syntax 加载前设置，否则 foldmethod=syntax 下 HTML 无折可折）
+let g:html_syntax_folding = 1
+
 " gtags 的问题定位
 " let g:gutentags_trace = 1
 let g:gutentags_define_advanced_commands = 1
@@ -216,7 +220,6 @@ Plug 'MattesGroeger/vim-bookmarks'
 " Startify dashboard with GitHub heatmap
 Plug 'mhinz/vim-startify'
 
-Plug 'vim-scripts/XML-Folding'
 call plug#end()
 
 
