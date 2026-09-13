@@ -417,7 +417,8 @@ nnoremap <silent> ]g :LspNextDiagnostic<CR>
 " ------------------------------
 function! s:GscopeFind(what, is_file) abort
   let l:source_win = win_getid()
-  let l:restore_winfixbuf = &l:winfixbuf
+  " 某些 Vim（如 Ubuntu 9.1.0016 老包）没有 winfixbuf 选项，需先 exists 保护
+  let l:restore_winfixbuf = exists('+winfixbuf') && &l:winfixbuf
   if l:restore_winfixbuf
     setlocal nowinfixbuf
   endif
