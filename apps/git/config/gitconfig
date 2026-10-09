@@ -4,6 +4,9 @@
 
 [core]
   autocrlf = input
+  # 大小写敏感：避免 macOS 上不区分大小写的文件系统导致 index/工作区冲突
+  # 注意：已克隆仓库在本地 config 里已有 ignorecase，全局设置不覆盖，需逐仓库执行 git config core.ignorecase false
+  ignorecase = false
   safecrlf = true
   whitespace = trailing-space,space-before-tab
   excludesfile = ~/.gitignore_global
@@ -99,3 +102,8 @@
   enabled = true
 [include]
 	path = ~/.gitconfig_local
+[filter "lfs"]
+	smudge = git-lfs smudge -- %f
+	process = git-lfs filter-process
+	required = true
+	clean = git-lfs clean -- %f
