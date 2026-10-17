@@ -90,6 +90,10 @@ let $GTAGSCONF = expand('~/.global/gtags.conf')
 " (vim-preview 的 PreviewTag/PreviewSignature 需要 +n 行号字段)
 let g:gutentags_ctags_extra_args = ['--fields=+nS']
 
+" ctags 排除依赖目录/数据文件，避免 tags 库膨胀（曾达数 GB）
+" 注意：只作用于 ctags 模块；gtags_cscope 模块的排除在 ~/.global/gtags.conf 的 skip 列表
+let g:gutentags_ctags_exclude = ['node_modules', 'data', 'target', 'dist', 'build', '*.json', '*.db', '.git']
+
 " 设置 cache 目录（可选）
 let g:gutentags_cache_dir = expand('~/.cache/tags')
 
