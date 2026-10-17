@@ -67,6 +67,8 @@ set foldenable
 " （逐行语法级折叠计算，实测 main.ts 需 18s+）。TS/JS 改用 indent 折叠，
 " 轻量且体验等价（实测 1.7s、折叠正常）。
 autocmd FileType typescript,typescriptreact,javascript,javascriptreact setlocal foldmethod=indent
+" swift 同理：自带 syntax/swift.vim 不含任何 fold 定义，zM 无折点可用
+autocmd FileType swift setlocal foldmethod=indent
 
 " HTML/XML：内置 html.vim 的标签折叠默认关闭，需显式开启
 " （必须在 syntax 加载前设置，否则 foldmethod=syntax 下 HTML 无折可折）
