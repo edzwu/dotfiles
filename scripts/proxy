@@ -7,7 +7,7 @@ usage() {
   cat <<'EOF'
 Usage:
   proxy env <jump|clash|off>      Print shell export/unset code
-  proxy tunnel <jump|tt1|off>     Manage SSH tunnel
+  proxy tunnel <jump|tt1|los|off> Manage SSH tunnel
   proxy status                    Show current proxy status
   proxy list                      List available proxy profiles
   proxy toggle-env                Toggle between off/jump/clash
@@ -142,8 +142,9 @@ cmd_tunnel() {
   case "$name" in
     jump) _tunnel_host jump 8888 ;;
     tt1)  _tunnel_host tt1 8889 ;;
+    los)  _tunnel_host los 8890 ;;
     off)  _tunnel_off ;;
-    *) usage >&2; die "Unknown tunnel action: '$name'. Use: jump, tt1, off" ;;
+    *) usage >&2; die "Unknown tunnel action: '$name'. Use: jump, tt1, los, off" ;;
   esac
 }
 

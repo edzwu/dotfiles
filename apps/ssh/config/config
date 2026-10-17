@@ -41,3 +41,10 @@ Host tt1
 Host tt2
     HostName 124.223.158.247
     User edward
+
+Host los
+    HostName 176.122.137.154
+    User edward
+    Port 22
+    ServerAliveInterval 30
+    ServerAliveCountMax 3

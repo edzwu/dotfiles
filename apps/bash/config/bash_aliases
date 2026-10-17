@@ -55,6 +55,7 @@ pjump() {
   proxy_tunnel "$host" >/dev/null 2>&1 || true
   case "$host" in
     tt1) export PROXY_URL_JUMP="http://127.0.0.1:8889" ;;
+    los) export PROXY_URL_JUMP="http://127.0.0.1:8890" ;;
     *)   export PROXY_URL_JUMP="http://127.0.0.1:8888" ;;
   esac
   proxy_env jump
@@ -78,6 +79,7 @@ alias hd='ssh edward@156.239.24.42'
 alias centos='ssh edward@43.129.192.176'
 alias tt1='ssh tt1'
 alias tt2='ssh tt2'
+alias los='ssh los'
 alias llm='ls -lt --reverse'
 
 alias t="tmux a"
